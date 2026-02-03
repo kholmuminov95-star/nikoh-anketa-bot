@@ -6,6 +6,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import BOT_TOKEN
 from database import Database
 from handlers import routers
+from handlers.admin import router as admin_router  # <- BU QATORNI QO'SHING
+
+# ... qolgan kodlar ...
 
 # Log qilishni sozlash
 logging.basicConfig(
