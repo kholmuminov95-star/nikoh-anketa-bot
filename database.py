@@ -176,3 +176,124 @@ class Database:
                 LIMIT ?
             ''', (user_id, limit))
             return await cursor.fetchall()
+    # Qo'shimcha funksiyalar
+    async def get_user(self, user_id):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+            row = await cursor.fetchone()
+            if row:
+                columns = [description[0] for description in cursor.description]
+                return dict(zip(columns, row))
+            return None
+    
+    async def get_user_gender(self, user_id):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('SELECT gender FROM users WHERE user_id = ?', (user_id,))
+            row = await cursor.fetchone()
+            return row[0] if row else None
+    
+    async def get_user_profile(self, user_id):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('SELECT * FROM profiles WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', (user_id,))
+            row = await cursor.fetchone()
+            if row:
+                columns = [description[0] for description in cursor.description]
+                return dict(zip(columns, row))
+            return None
+    
+    async def get_profile_by_id(self, profile_id):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('SELECT * FROM profiles WHERE profile_id = ?', (profile_id,))
+            row = await cursor.fetchone()
+            if row:
+                columns = [description[0] for description in cursor.description]
+                return dict(zip(columns, row))
+            return None
+    
+    async def get_profiles_by_gender(self, gender, limit=10, offset=0):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('''
+                SELECT * FROM profiles 
+                WHERE gender = ? AND is_public = TRUE
+                ORDER BY created_at DESC 
+                LIMIT ? OFFSET ?
+            ''', (gender, limit, offset))
+            rows = await cursor.fetchall()
+            
+            profiles = []
+            columns = [description[0] for description in cursor.description]
+            for row in rows:
+                profiles.append(dict(zip(columns, row)))
+            return profiles
+    
+    async def count_profiles_by_gender(self, gender):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('SELECT COUNT(*) FROM profiles WHERE gender = ? AND is_public = TRUE', (gender,))
+            row = await cursor.fetchone()
+            return row[0] if row else 0
+    
+    async def create_request(self, from_user_id, to_profile_id, amount_paid):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('''
+                INSERT INTO requests (from_user_id, to_profile_id, amount_paid, status)
+                VALUES (?, ?, ?, ?)
+            ''', (from_user_id, to_profile_id, amount_paid, 'pending'))
+            await db.commit()
+            return cursor.lastrowid
+    
+    async def update_request_status(self, request_id, status):
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute('UPDATE requests SET status = ? WHERE request_id = ?', (status, request_id))
+            await db.commit()
+    
+    async def get_pending_requests_to_user(self, user_id):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('''
+                SELECT r.*, p.* FROM requests r
+                JOIN profiles p ON r.to_profile_id = p.profile_id
+                WHERE p.user_id = ? AND r.status = 'pending'
+                ORDER BY r.created_at DESC
+            ''', (user_id,))
+            rows = await cursor.fetchall()
+            
+            requests = []
+            columns = [description[0] for description in cursor.description]
+            for row in rows:
+                requests.append(dict(zip(columns, row)))
+            return requests
+    
+    async def get_user_transactions(self, user_id, limit=20):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('''
+                SELECT * FROM transactions 
+                WHERE user_id = ? 
+                ORDER BY created_at DESC 
+                LIMIT ?
+            ''', (user_id, limit))
+            rows = await cursor.fetchall()
+            
+            transactions = []
+            columns = [description[0] for description in cursor.description]
+            for row in rows:
+                transactions.append(dict(zip(columns, row)))
+            return transactions
+    
+    async def add_transaction(self, user_id, amount, transaction_type, description="", status="completed"):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('''
+                INSERT INTO transactions (user_id, amount, transaction_type, description, status)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (user_id, amount, transaction_type, description, status))
+            await db.commit()
+            return cursor.lastrowid
+    
+    async def update_user_field(self, user_id, field, value):
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(f'UPDATE users SET {field} = ? WHERE user_id = ?', (value, user_id))
+            await db.commit()
+    
+    async def check_user_has_profile(self, user_id):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('SELECT COUNT(*) FROM profiles WHERE user_id = ?', (user_id,))
+            row = await cursor.fetchone()
+            return row[0] > 0 if row else False
