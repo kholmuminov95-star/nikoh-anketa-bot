@@ -1,33 +1,34 @@
 import os
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID"))  # string dan int ga o‘tkazish kerak
-
-
 import logging
 import random
 from datetime import datetime
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Text
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    ReplyKeyboardMarkup, KeyboardButton,
+    InlineKeyboardMarkup, InlineKeyboardButton
+)
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.storage.memory import MemoryStorage
 
 # ================= CONFIG =================
-START_BALANCE = 5000  # boshlang'ich bonus
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID"))  # Railway da ENV variable string bo'ladi, int ga o'tkazamiz
+START_BALANCE = 5000
 
 # ================= LOGGING =================
 logging.basicConfig(level=logging.INFO)
 
-# ================= BOT & STORAGE =================
+# ================= BOT & DISPATCHER =================
+storage = MemoryStorage()
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher(storage=MemoryStorage())
+dp = Dispatcher(storage=storage)
 
 # ================= DATA =================
 users = {}  # {user_id: {phone, balance, referal_code, profile, anketa_stage}}
-transactions = []  # {user_id, type, amount, timestamp}
+transactions = []  # list of dict {user_id, type, amount, timestamp}
 anketas = {}  # {user_id: profile_data}
 
 # ================= STATES =================
@@ -132,7 +133,7 @@ async def start_profile(message: types.Message, state: FSMContext):
 async def gender_handler(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     gender = message.text.lower()
-    if gender not in ["erkak","ayol"]:
+    if gender not in ["erkak", "ayol"]:
         await message.answer("Faqat /erkak yoki /ayol ni tanlang!")
         return
     users[user_id]["profile"]["gender"] = gender
