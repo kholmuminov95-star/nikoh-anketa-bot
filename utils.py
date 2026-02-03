@@ -67,7 +67,8 @@ def format_profile(profile_data, gender):
         text += f"?? Oilaviy holat: {profile_data.get('marital_status')}\n"
         
         if profile_data.get('marital_status') in ['Ajrashgan', 'Beva']:
-            children_text = "Yo'q" if profile_data.get('children', 0) == 0 else profile_data.get('children')
+            children = profile_data.get('children', 0)
+            children_text = "Yo'q" if children == 0 else str(children)
             text += f"?? Farzandi: {children_text}\n"
         
         text += f"?? Manzil: {profile_data.get('country')}"
@@ -81,7 +82,10 @@ def format_profile(profile_data, gender):
                 text += f", {profile_data.get('origin_region')}"
             text += "\n"
         
-        text += f"?? Namoz va Qur'on o'qiysizmi: {'Ha' if profile_data.get('prays') else 'Yo'q'}\n"
+        # Backslash muammosini hal qilish
+        prays_text = "Ha" if profile_data.get('prays') else "Yo'q"
+        text += f"?? Namoz va Qur'on o'qiysizmi: {prays_text}\n"
+        
         text += f"?? Nechta til bilasiz: {profile_data.get('languages')}\n"
         text += f"?? O'zingiz haqingizda: {profile_data.get('about', '')}\n"
         text += f"?? Kelin uchun talablar: {profile_data.get('requirements', '')}\n"
@@ -95,11 +99,17 @@ def format_profile(profile_data, gender):
         text += f"?? Oilaviy holat: {profile_data.get('marital_status')}\n"
         
         if profile_data.get('marital_status') in ['Ajrashgan', 'Beva']:
-            children_text = "Yo'q" if profile_data.get('children', 0) == 0 else profile_data.get('children')
+            children = profile_data.get('children', 0)
+            children_text = "Yo'q" if children == 0 else str(children)
             text += f"?? Farzandi: {children_text}\n"
         
-        text += f"?? Ro'mol o'raysizmi: {'Ha' if profile_data.get('hijab') else 'Yo'q'}\n"
-        text += f"?? Ko'chib o'tishga tayyormisiz: {'Ha' if profile_data.get('ready_to_move') else 'Yo'q'}\n"
+        # Backslash muammolarini hal qilish
+        hijab_text = "Ha" if profile_data.get('hijab') else "Yo'q"
+        text += f"?? Ro'mol o'raysizmi: {hijab_text}\n"
+        
+        move_text = "Ha" if profile_data.get('ready_to_move') else "Yo'q"
+        text += f"?? Ko'chib o'tishga tayyormisiz: {move_text}\n"
+        
         text += f"?? 2-likka rozimisiz: {profile_data.get('ready_for_second_wife')}\n"
         text += f"?? Manzil: {profile_data.get('country')}"
         if profile_data.get('region'):
@@ -112,7 +122,10 @@ def format_profile(profile_data, gender):
                 text += f", {profile_data.get('origin_region')}"
             text += "\n"
         
-        text += f"?? Namoz va Qur'on o'qiysizmi: {'Ha' if profile_data.get('prays') else 'Yo'q'}\n"
+        # Backslash muammosini hal qilish
+        prays_text = "Ha" if profile_data.get('prays') else "Yo'q"
+        text += f"?? Namoz va Qur'on o'qiysizmi: {prays_text}\n"
+        
         text += f"?? Nechta til bilasiz: {profile_data.get('languages')}\n"
         text += f"?? O'zingiz haqingizda: {profile_data.get('about', '')}\n"
         text += f"?? Kuyov uchun talablar: {profile_data.get('requirements', '')}\n"
