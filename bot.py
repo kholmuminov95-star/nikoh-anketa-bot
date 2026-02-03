@@ -1,3 +1,7 @@
+import os
+TOKEN = os.environ.get("BOT_TOKEN")
+ADMIN = os.environ.get("ADMIN_ID")
+
 from aiogram import Bot, Dispatcher, executor, types
 
 TOKEN = "8219884908:AAHMBf0JP1Cd_w2aGlN_cl_CZmyGoV1gAK4"
