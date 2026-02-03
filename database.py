@@ -297,3 +297,11 @@ class Database:
             cursor = await db.execute('SELECT COUNT(*) FROM profiles WHERE user_id = ?', (user_id,))
             row = await cursor.fetchone()
             return row[0] > 0 if row else False
+    async def get_all_users(self):
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute('SELECT * FROM users ORDER BY created_at DESC')
+            rows = await cursor.fetchall()
+            if rows:
+                columns = [description[0] for description in cursor.description]
+                return [dict(zip(columns, row)) for row in rows]
+            return []
