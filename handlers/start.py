@@ -1,6 +1,6 @@
 from aiogram import Router, F
-from aiogram.types import Message
-from aiogram.filters import CommandStart
+from aiogram.types import Message, CallbackQuery
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 
 from database import Database
@@ -12,8 +12,13 @@ db = Database()
 
 @router.message(CommandStart())
 async def start_command(message: Message, state: FSMContext):
+    """Start komandasi"""
     await state.clear()
     
+    logger = logging.getLogger(__name__)
+    logger.info(f"Start komandasi: {message.from_user.id}")
+    
+    # Foydalanuvchini tekshirish
     user = await db.get_user(message.from_user.id)
     
     if user and user.get('phone'):
@@ -25,6 +30,7 @@ async def start_command(message: Message, state: FSMContext):
 
 @router.message(F.contact)
 async def handle_contact(message: Message, state: FSMContext):
+    """Telefon raqam qabul qilish"""
     phone = message.contact.phone_number
     
     await db.add_user(
@@ -34,9 +40,8 @@ async def handle_contact(message: Message, state: FSMContext):
         username=message.from_user.username
     )
     
+    # Bonus berish
     user = await db.get_user(message.from_user.id)
-    bonus_text = ""
-    
     if user and not user.get('bonus_received'):
         await db.update_balance(
             user_id=message.from_user.id,
@@ -45,6 +50,8 @@ async def handle_contact(message: Message, state: FSMContext):
             description="Start bonus"
         )
         bonus_text = "\n🎉 Tabriklaymiz! Hisobingizga 5 000 so'm bonus qo'shildi!"
+    else:
+        bonus_text = ""
     
     text = f"""✅ Telefon raqamingiz tasdiqlandi! @NIKOH_01 kanalining rasmiy botiga xush kelibsiz.{bonus_text}
 
@@ -56,43 +63,6 @@ async def handle_contact(message: Message, state: FSMContext):
 
 @router.message(F.text == "Bosh menyu")
 async def main_menu_handler(message: Message, state: FSMContext):
+    """Bosh menyuga qaytish"""
     await state.clear()
     await message.answer("🏠 Bosh menyuga qaytdingiz.", reply_markup=main_menu_kb())
-
-@router.message(F.text == "Hisobim")
-async def my_balance(message: Message):
-    balance = await db.get_user_balance(message.from_user.id)
-    usd = balance / 12100
-    
-    text = f"""💰 **Hisobingiz:**
-Balans: {balance:,} so'm (${usd:.2f})
-1$ = 12,100 so'm
-
-💡 Hisobdagi mablag' kartaga qaytarilmaydi, boshqa foydalanuvchiga o'tkazilmaydi. Faqat ichki xizmatlarga (so'rov yuborish, e'lon berish, VIP olish, lichka ochish va h.k.) ishlatiladi."""
-    
-    from aiogram.utils.keyboard import ReplyKeyboardBuilder, KeyboardButton
-    builder = ReplyKeyboardBuilder()
-    builder.row(KeyboardButton(text="Hisobni to'ldirish"))
-    builder.row(KeyboardButton(text="Tranzaksiyalar tarixi"))
-    builder.row(KeyboardButton(text="Bosh menyu"))
-    
-    await message.answer(text, reply_markup=builder.as_markup(resize_keyboard=True))
-
-@router.message(F.text == "Profil")
-async def profile_menu(message: Message, state: FSMContext):
-    user = await db.get_user(message.from_user.id)
-    
-    if not user or not user.get('profile_completed'):
-        text = """ℹ️ Tushunmasangiz videoni ko'rishingiz mumkun: https://t.me/nikohboti/9
-
-Jinsingizni tanlang:"""
-        from keyboards import gender_kb
-        await message.answer(text, reply_markup=gender_kb())
-    else:
-        profile = await db.get_user_profile(message.from_user.id)
-        if profile:
-            from utils import format_profile
-            text = format_profile(profile, profile.get('gender'))
-            await message.answer(text, reply_markup=main_menu_kb())
-        else:
-            await message.answer("Profil topilmadi. Iltimos, profil to'ldiring.", reply_markup=main_menu_kb())
