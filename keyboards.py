@@ -1,7 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
-# Asosiy tugmalar
+# Asosiy menyu
 def main_menu_kb():
     builder = ReplyKeyboardBuilder()
     builder.row(KeyboardButton(text="Hisobim"))
@@ -18,11 +18,13 @@ def main_menu_kb():
     builder.row(KeyboardButton(text="Bosh menyu"))
     return builder.as_markup(resize_keyboard=True)
 
+# Telefon raqam so'rash
 def phone_request_kb():
     builder = ReplyKeyboardBuilder()
     builder.row(KeyboardButton(text="Telefon raqamni yuborish", request_contact=True))
     return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
 
+# Jins tanlash
 def gender_kb():
     builder = ReplyKeyboardBuilder()
     builder.row(KeyboardButton(text="Erkak"))
@@ -30,6 +32,7 @@ def gender_kb():
     builder.row(KeyboardButton(text="Bosh menyu"))
     return builder.as_markup(resize_keyboard=True)
 
+# Ha/Yo'q
 def yes_no_kb():
     builder = ReplyKeyboardBuilder()
     builder.row(KeyboardButton(text="Ha"))
@@ -50,7 +53,7 @@ def nationality_kb():
     builder.row(KeyboardButton(text="Bosh menyu"))
     return builder.as_markup(resize_keyboard=True)
 
-# Oilaviy holat (erkaklar uchun)
+# Erkaklar uchun oilaviy holat
 def marital_status_male_kb():
     builder = ReplyKeyboardBuilder()
     builder.row(KeyboardButton(text="Bo'ydoq"))
@@ -59,7 +62,7 @@ def marital_status_male_kb():
     builder.row(KeyboardButton(text="Bosh menyu"))
     return builder.as_markup(resize_keyboard=True)
 
-# Oilaviy holat (ayollar uchun)
+# Ayollar uchun oilaviy holat
 def marital_status_female_kb():
     builder = ReplyKeyboardBuilder()
     builder.row(KeyboardButton(text="Turmush qurmagan"))
@@ -124,35 +127,7 @@ def ad_types_kb():
     builder.row(KeyboardButton(text="Bosh menyu"))
     return builder.as_markup(resize_keyboard=True)
 
-# Inline tugmalar
-def confirm_kb():
-    builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text="Tasdiqlash", callback_data="confirm"))
-    builder.row(InlineKeyboardButton(text="Bekor qilish", callback_data="cancel"))
-    return builder.as_markup()
-
-def retry_kb():
-    builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text="Tasdiqlash", callback_data="confirm"))
-    builder.row(InlineKeyboardButton(text="Qayta kiritish", callback_data="retry"))
-    builder.row(InlineKeyboardButton(text="Bosh menyu", callback_data="main_menu"))
-    return builder.as_markup()
-
-def send_request_kb(profile_id):
-    builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text="So'rov yuborish", callback_data=f"send_request:{profile_id}"))
-    return builder.as_markup()
-
-def pagination_kb(page, total_pages, callback_prefix):
-    builder = InlineKeyboardBuilder()
-    if page > 1:
-        builder.row(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"{callback_prefix}:{page-1}"))
-    if page < total_pages:
-        builder.row(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"{callback_prefix}:{page+1}"))
-    builder.row(InlineKeyboardButton(text="Bosh menyu", callback_data="main_menu"))
-    return builder.as_markup()
-
-# Ikkinchi xotinlik uchun
+# Ikkinchi xotinlik
 def second_wife_kb():
     builder = ReplyKeyboardBuilder()
     builder.row(KeyboardButton(text="Ha"))
@@ -168,3 +143,22 @@ def filled_by_kb():
     builder.row(KeyboardButton(text="Vakili"))
     builder.row(KeyboardButton(text="Bosh menyu"))
     return builder.as_markup(resize_keyboard=True)
+
+# Inline tugmalar
+def confirm_kb():
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="✅ Tasdiqlash", callback_data="confirm"))
+    builder.row(InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel"))
+    return builder.as_markup()
+
+def retry_kb():
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="✅ Tasdiqlash", callback_data="confirm"))
+    builder.row(InlineKeyboardButton(text="🔄 Qayta kiritish", callback_data="retry"))
+    builder.row(InlineKeyboardButton(text="🏠 Bosh menyu", callback_data="main_menu"))
+    return builder.as_markup()
+
+def send_request_kb(profile_id):
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="📨 So'rov yuborish", callback_data=f"send_request:{profile_id}"))
+    return builder.as_markup()
