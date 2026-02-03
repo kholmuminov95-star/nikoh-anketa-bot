@@ -1,13 +1,19 @@
 import aiosqlite
-import datetime
+import os
 from config import DATABASE_PATH
 
 class Database:
     def __init__(self):
+        # Railway da persistent storage uchun
         self.db_path = DATABASE_PATH
+        
+        # Papka yo'q bo'lsa yaratish
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
     
     async def init_db(self):
         async with aiosqlite.connect(self.db_path) as db:
+            # ... qolgan kodlar o'zgarmaydi
+
             # Foydalanuvchilar jadvali
             await db.execute('''
                 CREATE TABLE IF NOT EXISTS users (
