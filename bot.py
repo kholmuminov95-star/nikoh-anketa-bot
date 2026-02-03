@@ -1,3 +1,9 @@
+import os
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID"))  # string dan int ga o‘tkazish kerak
+
+
 import logging
 import random
 from datetime import datetime
@@ -10,8 +16,6 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.storage.memory import MemoryStorage
 
 # ================= CONFIG =================
-BOT_TOKEN = "8219884908:AAHMBf0JP1Cd_w2aGlN_cl_CZmyGoV1gAK4"
-ADMIN_ID = 123456789  # <-- sening admin user ID raqam ko‘rinishda
 START_BALANCE = 5000  # boshlang'ich bonus
 
 # ================= LOGGING =================
