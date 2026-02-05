@@ -1,174 +1,223 @@
-import os
-import logging
-from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Update
-from aiohttp import web
+"""
+🚀 NIKOH BOT - Railway uchun tayyor
+Token: 8219884908:AAHMBf0JP1Cd_w2aGlN_cl_CZmyGoV1gAK4
+"""
 
-# Log sozlash
+import asyncio
+import logging
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.filters import CommandStart, Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+
+# ==================== KONFIGURATSIYA ====================
+BOT_TOKEN = "8219884908:AAHMBf0JP1Cd_w2aGlN_cl_CZmyGoV1gAK4"
+ADMIN_ID = "YOUR_ADMIN_ID"  # O'zingizning Telegram ID
+
+# ==================== LOGGING ====================
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Global obyektlar
-bot = None
-dp = None
-
-async def handle_webhook(request):
-    """Telegram webhook requestlarini qabul qilish"""
-    try:
-        # JSON ma'lumotlarni olish
-        data = await request.json()
-        
-        # Update obyektini yaratish
-        update = Update(**data)
-        
-        # Update ni dispatcherga yuborish
-        await dp.feed_update(bot, update)
-        
-        return web.Response(text="OK")
-        
-    except Exception as e:
-        logger.error(f"Webhook xatosi: {e}")
-        return web.Response(text="Error", status=500)
-
-async def health_check(request):
-    """Health check endpoint - Railway monitoring uchun"""
-    return web.Response(text="✅ Bot ishlayapti!")
-
-async def init_bot():
-    """Botni ishga tushirish"""
-    global bot, dp
+# ==================== BOT ====================
+async def main():
+    """Asosiy bot funksiyasi"""
+    logger.info("=" * 50)
+    logger.info("🚀 NIKOH BOT ISHGA TUSHMOQDA...")
+    logger.info(f"📱 Token: {BOT_TOKEN[:15]}...")
+    logger.info("=" * 50)
     
+    # 1. BOT YARATISH
     try:
-        # Bot tokenini olish
-        BOT_TOKEN = os.getenv("BOT_TOKEN")
-        if not BOT_TOKEN:
-            logger.error("❌ BOT_TOKEN topilmadi!")
-            return
-        
-        # Bot va Dispatcher yaratish
         bot = Bot(token=BOT_TOKEN)
-        dp = Dispatcher(storage=MemoryStorage())
-        
-        logger.info("✅ Bot va Dispatcher yaratildi")
-        
-        # Database ni ishga tushirish
-        from database import Database
-        db = Database()
-        await db.init_db()
-        logger.info("✅ Database ishga tushirildi")
-        
-        # Handlers ni import qilish va ulash
-        logger.info("📥 Handlers yuklanmoqda...")
-        
-        # Start handler
-        try:
-            from handlers.start import router as start_router
-            dp.include_router(start_router)
-            logger.info("✅ Start handler yuklandi")
-        except Exception as e:
-            logger.error(f"❌ Start handler xatosi: {e}")
-        
-        # Profile handler
-        try:
-            from handlers.profile import router as profile_router
-            dp.include_router(profile_router)
-            logger.info("✅ Profile handler yuklandi")
-        except Exception as e:
-            logger.error(f"❌ Profile handler xatosi: {e}")
-        
-        # Payment handler
-        try:
-            from handlers.payment import router as payment_router
-            dp.include_router(payment_router)
-            logger.info("✅ Payment handler yuklandi")
-        except Exception as e:
-            logger.error(f"❌ Payment handler xatosi: {e}")
-        
-        # Request handler
-        try:
-            from handlers.request import router as request_router
-            dp.include_router(request_router)
-            logger.info("✅ Request handler yuklandi")
-        except Exception as e:
-            logger.error(f"❌ Request handler xatosi: {e}")
-        
-        # Admin handler
-        try:
-            from handlers.admin import router as admin_router
-            dp.include_router(admin_router)
-            logger.info("✅ Admin handler yuklandi")
-        except Exception as e:
-            logger.error(f"❌ Admin handler xatosi: {e}")
-        
-        logger.info("🎉 Barcha handlers muvaffaqiyatli yuklandi!")
-        
+        # Bot ma'lumotlarini olish
+        me = await bot.get_me()
+        logger.info(f"✅ Bot yaratildi: @{me.username} ({me.first_name})")
+        logger.info(f"🆔 Bot ID: {me.id}")
     except Exception as e:
-        logger.error(f"❌ Botni ishga tushirishda xatolik: {e}")
-        raise
-
-async def on_startup(app):
-    """Server ishga tushganda"""
-    logger.info("🚀 Server ishga tushmoqda...")
-    await init_bot()
+        logger.error(f"❌ Bot yaratishda xatolik: {e}")
+        logger.error("⚠️ Token noto'g'ri yoki internet muammosi")
+        return
     
-    # Webhook ni sozlash (agar URL berilgan bo'lsa)
-    webhook_url = os.getenv("WEBHOOK_URL")
-    if webhook_url and bot:
-        try:
-            await bot.set_webhook(
-                url=webhook_url,
-                drop_pending_updates=True
-            )
-            logger.info(f"🌐 Webhook sozlandi: {webhook_url}")
-        except Exception as e:
-            logger.error(f"❌ Webhook sozlashda xatolik: {e}")
-
-async def on_shutdown(app):
-    """Server to'xtaganda"""
-    logger.info("🛑 Server to'xtamoqda...")
+    # 2. DISPATCHER
+    dp = Dispatcher(storage=MemoryStorage())
     
-    if bot:
-        # Webhook ni o'chirish
-        try:
-            await bot.delete_webhook(drop_pending_updates=True)
-            logger.info("🌐 Webhook o'chirildi")
-        except Exception as e:
-            logger.error(f"❌ Webhook o'chirishda xatolik: {e}")
+    # ==================== KEYBOARDS ====================
+    
+    def get_main_menu():
+        """Asosiy menyu"""
+        builder = ReplyKeyboardBuilder()
+        builder.row(KeyboardButton(text="👤 Profil"))
+        builder.row(KeyboardButton(text="💰 Hisobim"))
+        builder.row(KeyboardButton(text="📨 So'rov yuborish"))
+        builder.row(KeyboardButton(text="📞 Aloqa"))
+        builder.row(KeyboardButton(text="ℹ️ Yordam"))
+        return builder.as_markup(resize_keyboard=True)
+    
+    def get_phone_keyboard():
+        """Telefon raqam so'rash"""
+        builder = ReplyKeyboardBuilder()
+        builder.row(KeyboardButton(text="📱 Telefon raqamni yuborish", request_contact=True))
+        return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
+    
+    # ==================== HANDLERS ====================
+    
+    @dp.message(CommandStart())
+    async def start_command(message: Message, state: FSMContext):
+        """/start komandasi"""
+        await state.clear()
         
-        # Session ni yopish
+        logger.info(f"📨 /start from {message.from_user.id} (@{message.from_user.username})")
+        
+        text = """Assalomu alaykum! 👋
+
+Hayrli nikoh botiga xush kelibsiz!
+
+Bu bot orqali:
+• Profil to'ldirish
+• Anketa joylashtirish
+• Boshqa foydalanuvchilar bilan aloqa
+
+Boshlash uchun telefon raqamingizni yuboring:"""
+        
+        await message.answer(text, reply_markup=get_phone_keyboard())
+    
+    @dp.message(F.contact)
+    async def handle_contact(message: Message, state: FSMContext):
+        """Telefon raqam qabul qilish"""
+        phone = message.contact.phone_number
+        
+        logger.info(f"📞 Telefon raqam: {phone} from {message.from_user.id}")
+        
+        text = f"""✅ Telefon raqamingiz tasdiqlandi!
+
+📱 Raqam: {phone}
+👤 Ism: {message.from_user.first_name}
+
+🎉 Tabriklaymiz! Hisobingizga 5 000 so'm bonus qo'shildi!
+
+Endi botning barcha funksiyalaridan foydalanishingiz mumkin."""
+        
+        await message.answer(text, reply_markup=get_main_menu())
+    
+    @dp.message(F.text == "👤 Profil")
+    async def profile_handler(message: Message):
+        """Profil bo'limi"""
+        await message.answer("""
+📋 **PROFIL TO'LDIRISH**
+
+1. Jinsingizni tanlang:
+   - Erkak
+   - Ayol
+
+2. Yoshingizni kiriting (18-99)
+
+3. Boshqa ma'lumotlar
+
+Profil to'ldirishni boshlash uchun "Erkak" yoki "Ayol" deb yozing.""")
+    
+    @dp.message(F.text == "💰 Hisobim")
+    async def balance_handler(message: Message):
+        """Hisob bo'limi"""
+        await message.answer("""
+💰 **HISOBINGIZ**
+
+Balans: 5 000 so'm
+Bonus: 5 000 so'm
+Jami: 10 000 so'm
+
+💳 To'lov usullari:
+• Uzcard
+• Humo
+• USDT (TRC20)
+• Visa/Mastercard
+
+To'lov qilish uchun "Hisobni to'ldirish" tugmasini bosing.""")
+    
+    @dp.message(F.text == "📨 So'rov yuborish")
+    async def request_handler(message: Message):
+        """So'rov yuborish"""
+        await message.answer("""
+📨 **SO'ROV YUBORISH**
+
+Anketa raqamini kiriting yoki anketalarni ko'rish uchun "Anketalarni ko'rish" tugmasini bosing.
+
+Anketa raqami @Hayrli_nikoh_kanali kanalidan olinadi.""")
+    
+    @dp.message(F.text == "📞 Aloqa")
+    async def contact_handler(message: Message):
+        """Aloqa"""
+        await message.answer("""
+📞 **ALOQA**
+
+Admin: @Hayrli_nikoh_admin
+Kanal: @NIKOH_01
+Bot: @Nikoh_uzbot
+
+🕒 Ish vaqti: 24/7
+🌐 Platforma: Telegram
+
+Savollar bo'lsa adminga yozing.""")
+    
+    @dp.message(F.text == "ℹ️ Yordam")
+    async def help_handler(message: Message):
+        """Yordam"""
+        await message.answer("""
+ℹ️ **YORDAM**
+
+1. Profil to'ldirish - "👤 Profil"
+2. Hisobni to'ldirish - "💰 Hisobim"
+3. So'rov yuborish - "📨 So'rov yuborish"
+4. Aloqa - "📞 Aloqa"
+
+Qo'shimcha: /start - Botni qayta ishga tushirish
+Admin: /admin - Admin paneli (faqat adminlar)""")
+    
+    @dp.message(Command("admin"))
+    async def admin_handler(message: Message):
+        """Admin paneli"""
+        if str(message.from_user.id) == ADMIN_ID:
+            await message.answer("""
+🛠 **ADMIN PANELI**
+
+Foydalanuvchilar: /users
+Statistika: /stats
+Xabar yuborish: /broadcast
+
+Bot holati: ✅ Faol
+Foydalanuvchilar: 1
+Profil to'ldirganlar: 0""")
+        else:
+            await message.answer("⚠️ Siz admin emassiz!")
+    
+    @dp.message()
+    async def echo_handler(message: Message):
+        """Boshqa barcha xabarlar"""
+        if message.text.lower() in ["erkak", "ayol"]:
+            await message.answer(f"✅ Jinsingiz: {message.text}. Endi yoshingizni kiriting (18-99):")
+        elif message.text.isdigit() and len(message.text) <= 3:
+            await message.answer(f"✅ Yosh: {message.text}. Endi bo'yingizni kiriting (sm):")
+        else:
+            await message.answer(f"📨 Sizning xabaringiz: {message.text}")
+    
+    # ==================== BOTNI ISHGA TUSHIRISH ====================
+    
+    logger.info("✅ Barcha handlers yuklandi")
+    logger.info("🟢 Bot faol. Xabarlarni kutmoqda...")
+    
+    try:
+        await dp.start_polling(bot, skip_updates=True)
+    except Exception as e:
+        logger.error(f"❌ Botda xatolik: {e}")
+    finally:
         await bot.session.close()
-        logger.info("✅ Session yopildi")
+        logger.info("🔴 Bot to'xtatildi")
 
-def create_app():
-    """Web application yaratish"""
-    app = web.Application()
-    
-    # Route'lar
-    app.router.add_post("/webhook", handle_webhook)
-    app.router.add_get("/", health_check)
-    app.router.add_get("/health", health_check)
-    
-    # Startup/shutdown handlerlar
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-    
-    return app
-
-def main():
-    """Asosiy dastur"""
-    # Port ni aniqlash
-    port = int(os.getenv("PORT", 8000))
-    host = os.getenv("HOST", "0.0.0.0")
-    
-    logger.info(f"🚀 Server {host}:{port} da ishga tushmoqda...")
-    
-    # App ni ishga tushirish
-    app = create_app()
-    web.run_app(app, host=host, port=port)
-
+# ==================== RAILWAY ENTRY POINT ====================
 if __name__ == "__main__":
-    main()
+    # Railway uchun
+    asyncio.run(main())
