@@ -14,7 +14,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 # ==================== KONFIGURATSIYA ====================
 BOT_TOKEN = "8219884908:AAHMBf0JP1Cd_w2aGlN_cl_CZmyGoV1gAK4"
-ADMIN_ID = "YOUR_ADMIN_ID"  # O'zingizning Telegram ID
+ADMIN_ID = "5335676431"  # O'zingizning Telegram ID
 
 # ==================== LOGGING ====================
 logging.basicConfig(
