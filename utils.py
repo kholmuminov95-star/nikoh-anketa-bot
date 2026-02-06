@@ -1,6 +1,7 @@
 from config import USD_TO_UZS, BONUS_300K, BONUS_500K, BONUS_1M
 
-def calculate_bonus(amount_uzs):
+def calculate_bonus(amount_uzs: int) -> int:
+    """Bonusni hisoblash"""
     if amount_uzs >= 1000000:
         return int(amount_uzs * BONUS_1M)
     elif amount_uzs >= 500000:
@@ -9,123 +10,110 @@ def calculate_bonus(amount_uzs):
         return int(amount_uzs * BONUS_300K)
     return 0
 
-def format_balance(balance_uzs):
-    usd = balance_uzs / USD_TO_UZS
-    return f"Balans: {balance_uzs:,} so'm (${usd:.2f})"
-
-def validate_age(age_text):
+def validate_age(text: str):
+    """Yoshni tekshirish (18-99)"""
     try:
-        age = int(age_text)
+        age = int(text)
         if 18 <= age <= 99:
             return age
         return None
     except:
         return None
 
-def validate_height(height_text):
+def validate_height(text: str):
+    """Bo'yni tekshirish (100-250)"""
     try:
-        height = int(height_text)
+        height = int(text)
         if 100 <= height <= 250:
             return height
         return None
     except:
         return None
 
-def validate_weight(weight_text):
+def validate_weight(text: str):
+    """Vaznni tekshirish (30-200)"""
     try:
-        weight = int(weight_text)
+        weight = int(text)
         if 30 <= weight <= 200:
             return weight
         return None
     except:
         return None
 
-def validate_languages(lang_text):
+def validate_languages(text: str):
+    """Tillar sonini tekshirish (1-10)"""
     try:
-        lang = int(lang_text)
-        if 1 <= lang <= 10:
-            return lang
+        languages = int(text)
+        if 1 <= languages <= 10:
+            return languages
         return None
     except:
         return None
 
-def format_profile(profile_data, gender):
-    text = f"Anketa raqami: #{profile_data.get('profile_id', 'None')}\n\n"
+def format_profile(profile_data: dict, gender: str) -> str:
+    """Profil ma'lumotlarini formatlash"""
+    text = f"📋 **PROFIL MA'LUMOTLARI**\n\n"
     
-    yes_no = {True: "Ha", False: "Yo'q"}
+    # Umumiy ma'lumotlar
+    text += f"🎂 **Yosh:** {profile_data.get('age')} yosh\n"
+    text += f"📏 **Bo'y:** {profile_data.get('height')} sm\n"
+    text += f"⚖️ **Vazn:** {profile_data.get('weight')} kg\n"
+    text += f"🌍 **Millat:** {profile_data.get('nationality')}\n"
+    text += f"💍 **Oilaviy holat:** {profile_data.get('marital_status')}\n"
     
-    if gender == "male" or gender == "Erkak":
-        text += f"📅 Yosh: {profile_data.get('age')}\n"
-        text += f"📏 Bo'y: {profile_data.get('height')} sm\n"
-        text += f"⚖️ Vazn: {profile_data.get('weight')} kg\n"
-        text += f"🌍 Millati: {profile_data.get('nationality')}\n"
-        text += f"💍 Oilaviy holat: {profile_data.get('marital_status')}\n"
-        
-        if profile_data.get('marital_status') in ['Ajrashgan', 'Beva']:
-            children = profile_data.get('children', 0)
-            children_text = "Yo'q" if children == 0 else str(children)
-            text += f"👶 Farzandi: {children_text}\n"
-        
-        location = profile_data.get('country')
-        if profile_data.get('region'):
-            location += f", {profile_data.get('region')}"
-        text += f"📍 Manzil: {location}\n"
-        
-        if profile_data.get('country') != "O'zbekiston":
-            origin = profile_data.get('origin_country')
-            if profile_data.get('origin_region'):
-                origin += f", {profile_data.get('origin_region')}"
-            text += f"🎯 Asli qayerlik: {origin}\n"
-        
-        prays_text = yes_no.get(profile_data.get('prays'), "Yo'q")
-        text += f"📿 Namoz va Qur'on o'qiysizmi: {prays_text}\n"
-        
-        text += f"🗣️ Nechta til bilasiz: {profile_data.get('languages')}\n"
-        text += f"📝 O'zingiz haqingizda: {profile_data.get('about', '')}\n"
-        text += f"💭 Kelin uchun talablar: {profile_data.get('requirements', '')}\n"
-        
-        filled_by = profile_data.get('filled_by', '')
-        text += f"👤 Bog'lanish: {filled_by}: @Hayrli_nikoh_admin"
+    # Farzandlar (agar kerak bo'lsa)
+    if profile_data.get('marital_status') in ['Ajrashgan', 'Beva']:
+        children = profile_data.get('children', 0)
+        text += f"👶 **Farzandlar:** {children if children > 0 else 'Yo\\'q'}\n"
     
-    else:  # ayol
-        text += f"📅 Yosh: {profile_data.get('age')}\n"
-        text += f"📏 Bo'y: {profile_data.get('height')} sm\n"
-        text += f"⚖️ Vazn: {profile_data.get('weight')} kg\n"
-        text += f"🌍 Millati: {profile_data.get('nationality')}\n"
-        text += f"💍 Oilaviy holat: {profile_data.get('marital_status')}\n"
+    # Ayollar uchun qo'shimcha
+    if gender.lower() == 'ayol':
+        hijab = 'Ha' if profile_data.get('hijab') else "Yo'q"
+        text += f"🧕 **Ro\\'mol:** {hijab}\n"
         
-        if profile_data.get('marital_status') in ['Ajrashgan', 'Beva']:
-            children = profile_data.get('children', 0)
-            children_text = "Yo'q" if children == 0 else str(children)
-            text += f"👶 Farzandi: {children_text}\n"
+        move = 'Ha' if profile_data.get('ready_to_move') else "Yo'q"
+        text += f"✈️ **Ko\\'chishga tayyor:** {move}\n"
         
-        hijab_text = yes_no.get(profile_data.get('hijab'), "Yo'q")
-        text += f"🧕 Ro'mol o'raysizmi: {hijab_text}\n"
-        
-        move_text = yes_no.get(profile_data.get('ready_to_move'), "Yo'q")
-        text += f"✈️ Ko'chib o'tishga tayyormisiz: {move_text}\n"
-        
-        text += f"👰 2-likka rozimisiz: {profile_data.get('ready_for_second_wife')}\n"
-        
-        location = profile_data.get('country')
-        if profile_data.get('region'):
-            location += f", {profile_data.get('region')}"
-        text += f"📍 Manzil: {location}\n"
-        
-        if profile_data.get('country') != "O'zbekiston":
-            origin = profile_data.get('origin_country')
-            if profile_data.get('origin_region'):
-                origin += f", {profile_data.get('origin_region')}"
-            text += f"🎯 Asli qayerlik: {origin}\n"
-        
-        prays_text = yes_no.get(profile_data.get('prays'), "Yo'q")
-        text += f"📿 Namoz va Qur'on o'qiysizmi: {prays_text}\n"
-        
-        text += f"🗣️ Nechta til bilasiz: {profile_data.get('languages')}\n"
-        text += f"📝 O'zingiz haqingizda: {profile_data.get('about', '')}\n"
-        text += f"💭 Kuyov uchun talablar: {profile_data.get('requirements', '')}\n"
-        
-        filled_by = profile_data.get('filled_by', '')
-        text += f"👤 Bog'lanish: {filled_by}: @Hayrli_nikoh_admin"
+        text += f"👰 **2-likka rozilik:** {profile_data.get('ready_for_second_wife')}\n"
+    
+    # Manzil
+    country = profile_data.get('country', '')
+    region = profile_data.get('region', '')
+    if region:
+        text += f"📍 **Manzil:** {country}, {region}\n"
+    else:
+        text += f"📍 **Manzil:** {country}\n"
+    
+    # Asli qayerlik
+    origin_country = profile_data.get('origin_country', '')
+    origin_region = profile_data.get('origin_region', '')
+    if origin_region:
+        text += f"🎯 **Asli qayerlik:** {origin_country}, {origin_region}\n"
+    elif origin_country:
+        text += f"🎯 **Asli qayerlik:** {origin_country}\n"
+    
+    # Din va til
+    prays = 'Ha' if profile_data.get('prays') else "Yo'q"
+    text += f"📿 **Namoz va Qur\\'on:** {prays}\n"
+    text += f"🗣️ **Tillarni bilish:** {profile_data.get('languages')} ta\n"
+    
+    # Matnli qismlar
+    about = profile_data.get('about', '')
+    if about:
+        text += f"📝 **O\\'zi haqida:** {about[:100]}...\n"
+    
+    requirements = profile_data.get('requirements', '')
+    if requirements:
+        if gender.lower() == 'erkak':
+            text += f"💭 **Kelin uchun talablar:** {requirements[:100]}...\n"
+        else:
+            text += f"💭 **Kuyov uchun talablar:** {requirements[:100]}...\n"
+    
+    # Kim to'ldirdi
+    filled_by = profile_data.get('filled_by', '')
+    text += f"👤 **To\\'ldirgan:** {filled_by}\n"
+    
+    # Bog'lanish
+    text += f"\n📞 **Bog\\'lanish:** @Hayrli_nikoh_admin"
     
     return text
